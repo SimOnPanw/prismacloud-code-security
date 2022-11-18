@@ -90,7 +90,6 @@ def main():
     getBlameAuthors(API_ENDPOINT, token, "SimOnPanw/iac-onboarding-aws", "Github")
     getErrorsPerFile(API_ENDPOINT, token, "smelotte/java-spring-boot-web-app/java-spring-boot-web-app", "AzureRepos")
     getErrorsPerFile(API_ENDPOINT, token, "SimOnPanw/iac-onboarding-aws", "Github")
-    getErrorsPerFile(API_ENDPOINT, token, "stdeboer/Azure DevOps Prisma Cloud Demo/Azure DevOps Prisma Cloud Demo", "AzureRepos")
 
 if __name__ == "__main__":
     main()
