@@ -9,8 +9,6 @@ from datetime import datetime
 
 def getRepositories(base_url, token):
     url = "https://%s/code/api/v1/repositories" % ( base_url )
-
-    output("""URL: {}""".format(url) )    
     headers = {"content-type": "application/json; charset=UTF-8", 'Authorization': 'Bearer ' + token }    
     response = requests.get(url, headers=headers)
     repositories = response.json()
@@ -21,8 +19,6 @@ def getRepositories(base_url, token):
 ## sourceType = Github, Bitbucket, Gitlab, AzureRepos, cli, AWS, Azure, GCP, githubEnterprise, gitlabEnterprise, bitbucketEnterprise, terraformCloud, tfcRunTasks, githubActions, circleci, codebuild, jenkins, kubernetesWorkloads, Kubernetes, admissionController
 def getBlameAuthors(base_url, token, repoName, sourceType):
     url = "https://%s/code/api/v1/errors/gitBlameAuthors" % ( base_url)
-
-    output("""URL: {}""".format(url) )    
     querystring  = {'fullRepoName': repoName, 'sourceType': sourceType}
     headers = {"content-type": "application/json; charset=UTF-8", 'Authorization': 'Bearer ' + token }    
     response = requests.get(url, headers=headers, params=querystring)
@@ -31,21 +27,19 @@ def getBlameAuthors(base_url, token, repoName, sourceType):
     output("""Code API returns: {}""".format(response.text) )    
 
 ## sourceType = Github, Bitbucket, Gitlab, AzureRepos, cli, AWS, Azure, GCP, githubEnterprise, gitlabEnterprise, bitbucketEnterprise, terraformCloud, tfcRunTasks, githubActions, circleci, codebuild, jenkins, kubernetesWorkloads, Kubernetes, admissionController
-def getErrorsFiles(base_url, token, repoName, sourceType):
+def getErrorsFiles(base_url, token, policies, repoName, sourceType):
     url = "https://%s/code/api/v1/errors/files" % ( base_url)
-
-    output("""URL: {}""".format(url) )    
     payload = {"repository": repoName, "sourceTypes": [sourceType] }
     headers = {"content-type": "application/json", 'Authorization': 'Bearer ' + token }    
     response = requests.post(url, headers=headers, json=payload)
 
-    output("""Code API returns: {}""".format(response.text) )    
+    files = response.json()
+    for file in files["data"]:
+        getErrorsPerFile(base_url, token, policies, "807098694255043584_njannasch-pan/kubernetes-goat", "githubActions", file["filePath"])
 
 ## sourceType = Github, Bitbucket, Gitlab, AzureRepos, cli, AWS, Azure, GCP, githubEnterprise, gitlabEnterprise, bitbucketEnterprise, terraformCloud, tfcRunTasks, githubActions, circleci, codebuild, jenkins, kubernetesWorkloads, Kubernetes, admissionController
 def getErrorsPerFile(base_url, token, policies, repoName, sourceType, filePath):
-    url = "https://%s/code/api/v1/errors/file" % ( base_url)
-
-    output("""URL: {}""".format(url) )    
+    url = "https://%s/code/api/v1/errors/file" % ( base_url)    
     payload = {"repository": repoName, "sourceTypes": [sourceType] , "filePath": filePath, "types": ["Errors"]}
     headers = {"content-type": "application/json", 'Authorization': 'Bearer ' + token }    
     response = requests.post(url, headers=headers, json=payload)
@@ -63,7 +57,7 @@ def getPolicyDetail(policies, policyId):
       
 
 def getPoliciesDetail(base_url, token):
-    url = "https://%s/code/api/v1/checkov/runConfiguration" % ( base_url)
+    url = "https://%s/code/api/v1/checkov/runConfiguration?module=pc" % ( base_url)
     headers = {"content-type": "application/json", 'Authorization': 'Bearer ' + token }    
     response = requests.get(url, headers=headers)
     return response.json()
@@ -111,6 +105,15 @@ def main():
     CONFIG_FILE= os.environ['HOME'] + "/.prismacloud/credentials-legacy.json"
     API_ENDPOINT, PCC_API_ENDPOINT, ACCESS_KEY_ID, SECRET_KEY = getParamFromJson(CONFIG_FILE)
     token = login_saas(API_ENDPOINT, ACCESS_KEY_ID, SECRET_KEY)    
+    
+    ## List all repositories
+    # getRepositories(API_ENDPOINT, token)
+    
+    ## Get all policies metadata
+    policies = getPoliciesDetail(API_ENDPOINT, token)
+
+    ## Get all errors for a given repository
+    getErrorsFiles(API_ENDPOINT, token, policies, "example-pan/kubernetes-goat", "githubActions")
 
 if __name__ == "__main__":
     main()
